@@ -9,16 +9,23 @@ def convert_audio_to_wav(input_path: str) -> str:
     """
     ext = os.path.splitext(input_path)[1].lower()
     
-    if ext == ".wav":
-        # It's already a wav, just load and check if it needs resampling
-        audio = AudioSegment.from_wav(input_path)
-    elif ext == ".mp3":
-        audio = AudioSegment.from_mp3(input_path)
-    elif ext in [".m4a", ".mp4"]:
-        audio = AudioSegment.from_file(input_path, format="m4a")
-    else:
-        # Fallback to general file loading
-        audio = AudioSegment.from_file(input_path)
+    try:
+        if ext == ".wav":
+            # It's already a wav, try standard loading
+            audio = AudioSegment.from_wav(input_path)
+        elif ext == ".mp3":
+            audio = AudioSegment.from_mp3(input_path)
+        elif ext in [".m4a", ".mp4"]:
+            audio = AudioSegment.from_file(input_path, format="m4a")
+        else:
+            # Fallback to general file loading
+            audio = AudioSegment.from_file(input_path)
+    except Exception:
+        try:
+            # Robust fallback to auto-detection with ffmpeg
+            audio = AudioSegment.from_file(input_path)
+        except Exception as e:
+            raise ValueError(f"Failed to decode audio file: {str(e)}. Please check if the file format is supported and ffmpeg is installed.")
 
     # Set frame rate to 16000 and channels to 1 (Mono)
     audio = audio.set_frame_rate(16000).set_channels(1)

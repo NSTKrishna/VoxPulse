@@ -17,10 +17,10 @@
     "customer_risk_level": "High",
     "call_category": "General Inquiry",
     "resolution_status": "Unresolved",
-    "confidence_score": 0.75,
+    "confidence_score": 0.7,
     "_metadata": {
-        "report_id": "126d45bd-2fd3-48b8-be13-5051ef6f8a1b",
-        "generated_at": "2026-05-24 19:44:33 UTC",
+        "report_id": "212fa67d-59fe-4112-94a4-15dc7f26b705",
+        "generated_at": "2026-05-24 20:31:57 UTC",
         "system_version": "VoxPulse v1.0"
     }
 }

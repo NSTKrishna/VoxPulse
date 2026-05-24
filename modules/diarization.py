@@ -99,19 +99,45 @@ class AudioDiarizer:
             # Format output strictly
             formatted_segments = []
             
-            # Handle Pyannote 4.x which returns a DiarizeOutput object
-            if hasattr(diarization, "speaker_diarization"):
-                annotation = diarization.speaker_diarization
-            else:
+            # Find and extract the correct annotation or segments dynamically
+            annotation = None
+            if hasattr(diarization, "itertracks"):
                 annotation = diarization
+            elif hasattr(diarization, "speaker_diarization") and hasattr(diarization.speaker_diarization, "itertracks"):
+                annotation = diarization.speaker_diarization
+            elif hasattr(diarization, "annotation") and hasattr(diarization.annotation, "itertracks"):
+                annotation = diarization.annotation
             
-            # itertracks yields: turn (segment with start/end), track, and speaker_label
-            for turn, _, speaker in annotation.itertracks(yield_label=True):
-                formatted_segments.append({
-                    "speaker": speaker, # typically formatted as "SPEAKER_00", "SPEAKER_01", etc.
-                    "start": round(turn.start, 2),
-                    "end": round(turn.end, 2)
-                })
+            if annotation is not None:
+                # itertracks yields: turn (segment with start/end), track, and speaker_label
+                for turn, _, speaker in annotation.itertracks(yield_label=True):
+                    formatted_segments.append({
+                        "speaker": speaker, # typically formatted as "SPEAKER_00", "SPEAKER_01", etc.
+                        "start": round(turn.start, 2),
+                        "end": round(turn.end, 2)
+                    })
+            elif isinstance(diarization, list):
+                # Fallback if a list of segment objects/dicts is returned
+                for seg in diarization:
+                    if isinstance(seg, dict):
+                        formatted_segments.append({
+                            "speaker": str(seg.get("speaker", "SPEAKER_00")),
+                            "start": round(float(seg.get("start", 0.0)), 2),
+                            "end": round(float(seg.get("end", 0.0)), 2)
+                        })
+            elif isinstance(diarization, dict):
+                # Fallback if a dictionary containing a segment list is returned
+                segments_list = diarization.get("segments", diarization.get("results", []))
+                for seg in segments_list:
+                    if isinstance(seg, dict):
+                        formatted_segments.append({
+                            "speaker": str(seg.get("speaker", "SPEAKER_00")),
+                            "start": round(float(seg.get("start", 0.0)), 2),
+                            "end": round(float(seg.get("end", 0.0)), 2)
+                        })
+            else:
+                logger.error(f"Diarization output format unrecognized: {type(diarization)}. Dir: {dir(diarization)}")
+                return None
                 
             logger.info(f"Successfully identified {len(formatted_segments)} speaker turns.")
             return formatted_segments

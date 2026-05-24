@@ -52,7 +52,12 @@ def process_audio(audio_path, progress=gr.Progress()):
     progress parameter hooks into Gradio's live progress bar.
     """
     if not audio_path:
-        raise gr.Error("Please upload an audio file before proceeding.")
+        raise gr.Error(
+            "No audio detected! Please make sure to:\n"
+            "1. Upload an audio file OR\n"
+            "2. If recording via Microphone, click the 'Stop Recording' (square/pause icon) to finalize your recording before clicking 'Analyze Call'.\n"
+            "3. Ensure your browser is allowed to access your microphone (only works on 'localhost' or secure HTTPS pages)."
+        )
         
     try:
         # 0. Load Models
@@ -140,8 +145,12 @@ with gr.Blocks(title="VoxPulse - Call Analysis") as app:
         
         # Input Column
         with gr.Column(scale=1, variant="panel"):
-            gr.Markdown("### 1. Upload Call Recording")
-            audio_input = gr.Audio(type="filepath", label="Input Audio (.mp3, .wav, .m4a)")
+            gr.Markdown("### 1. Upload or Record Call Recording")
+            audio_input = gr.Audio(
+                sources=["upload", "microphone"],
+                type="filepath",
+                label="Input Audio (Upload .mp3/.wav or Record Microphone)"
+            )
             analyze_btn = gr.Button("Analyze Call", variant="primary", size="lg")
             
         # File Download Column
@@ -180,5 +189,5 @@ with gr.Blocks(title="VoxPulse - Call Analysis") as app:
     )
 
 if __name__ == "__main__":
-    # Launch the server (accessible at http://localhost:7860)
-    app.launch(server_name="0.0.0.0", server_port=7860, share=False)
+    # Launch the server (accessible at http://localhost:7860 and via a secure public link)
+    app.launch(server_name="0.0.0.0", server_port=7860, share=True)
