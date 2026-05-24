@@ -165,18 +165,15 @@ Analyze the following call transcript and generate the required JSON evaluation:
                 output = self.pipe(prompt, **generation_args)
                 raw_text = output[0]['generated_text'].strip()
                 
-                # Cleanup: Sometimes models wrap JSON in markdown blocks (```json ... ```)
-                if raw_text.startswith("```json"):
-                    raw_text = raw_text.replace("```json", "", 1)
-                if raw_text.endswith("```"):
-                    # Remove trailing ```
-                    raw_text = raw_text[::-1].replace("```", "", 1)[::-1]
-                raw_text = raw_text.strip()
+                # Use the robust LLM JSON utility for cleanup, syntax repair, and validation
+                from modules.json_utils import LLMJSONParser
+                parsed_json = LLMJSONParser.parse(raw_text)
                 
-                # JSON Validation
-                parsed_json = json.loads(raw_text)
-                logger.info("Successfully generated and validated JSON analysis.")
-                return parsed_json
+                if parsed_json:
+                    logger.info("Successfully generated and validated JSON analysis.")
+                    return parsed_json
+                else:
+                    raise json.JSONDecodeError("Failed to parse JSON even with robust utility.", raw_text, 0)
                 
             except json.JSONDecodeError as je:
                 logger.warning(f"Attempt {attempt} failed: Output was not valid JSON. Error: {je}")
