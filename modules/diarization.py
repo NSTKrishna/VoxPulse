@@ -58,7 +58,7 @@ class AudioDiarizer:
             # Load the pre-trained diarization pipeline
             self.pipeline = Pipeline.from_pretrained(
                 "pyannote/speaker-diarization-3.1", 
-                use_auth_token=self.token
+                token=self.token
             )
             # Send pipeline to the selected device
             self.pipeline.to(self.device)
@@ -99,8 +99,14 @@ class AudioDiarizer:
             # Format output strictly
             formatted_segments = []
             
+            # Handle Pyannote 4.x which returns a DiarizeOutput object
+            if hasattr(diarization, "speaker_diarization"):
+                annotation = diarization.speaker_diarization
+            else:
+                annotation = diarization
+            
             # itertracks yields: turn (segment with start/end), track, and speaker_label
-            for turn, _, speaker in diarization.itertracks(yield_label=True):
+            for turn, _, speaker in annotation.itertracks(yield_label=True):
                 formatted_segments.append({
                     "speaker": speaker, # typically formatted as "SPEAKER_00", "SPEAKER_01", etc.
                     "start": round(turn.start, 2),

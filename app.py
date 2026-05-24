@@ -27,14 +27,23 @@ pipeline_instances = {}
 
 def load_pipeline():
     """Lazy loads all heavy AI models to prevent crashing on app startup."""
-    if not pipeline_instances:
+    expected_keys = ['transcriber', 'diarizer', 'analyzer', 'report_gen']
+    if not all(k in pipeline_instances for k in expected_keys):
         print("Initializing AI models... (this may take a minute)")
-        # For local demos, "base" or "small" are recommended for whisper
-        pipeline_instances['transcriber'] = AudioTranscriber(model_name="base")
-        pipeline_instances['diarizer'] = AudioDiarizer()
-        pipeline_instances['analyzer'] = CallAnalyzer()
-        pipeline_instances['report_gen'] = ReportGenerator(output_dir="outputs")
-        print("All models loaded successfully!")
+        try:
+            # For local demos, "base" or "small" are recommended for whisper
+            if 'transcriber' not in pipeline_instances:
+                pipeline_instances['transcriber'] = AudioTranscriber(model_name="base")
+            if 'diarizer' not in pipeline_instances:
+                pipeline_instances['diarizer'] = AudioDiarizer()
+            if 'analyzer' not in pipeline_instances:
+                pipeline_instances['analyzer'] = CallAnalyzer()
+            if 'report_gen' not in pipeline_instances:
+                pipeline_instances['report_gen'] = ReportGenerator(output_dir="outputs")
+            print("All models loaded successfully!")
+        except Exception as e:
+            pipeline_instances.clear()
+            raise e
     return pipeline_instances
 
 def process_audio(audio_path, progress=gr.Progress()):
@@ -119,7 +128,7 @@ custom_css = """
 """
 
 # Build the layout
-with gr.Blocks(title="VoxPulse - Call Analysis", css=custom_css, theme=gr.themes.Soft(primary_hue="blue")) as app:
+with gr.Blocks(title="VoxPulse - Call Analysis") as app:
     
     # 1. Header Section
     with gr.Column(elem_classes="header-text"):
@@ -150,7 +159,6 @@ with gr.Blocks(title="VoxPulse - Call Analysis", css=custom_css, theme=gr.themes
             transcript_output = gr.TextArea(
                 label="Conversation",
                 lines=18,
-                show_copy_button=True,
                 interactive=False
             )
             

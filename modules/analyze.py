@@ -29,7 +29,7 @@ class CallAnalyzer:
     """
     A robust class to analyze transcripts using the Phi-3 Mini instruct model.
     """
-    def __init__(self, model_id: str = "microsoft/Phi-3-mini-4k-instruct"):
+    def __init__(self, model_id: str = "Qwen/Qwen2.5-0.5B-Instruct"):
         """
         Initializes the model and tokenizer, optimizing for the available hardware.
         """
@@ -88,9 +88,8 @@ class CallAnalyzer:
         Returns:
             Dict: Parsed JSON containing the analysis, or None if it fails.
         """
-        # System prompt explicitly asking for JSON. Phi-3 uses <|system|>, <|user|>, <|assistant|> tags
-        prompt = f"""<|system|>
-You are an elite Quality Assurance AI for a customer support center. Your sole function is to analyze the provided call transcript and evaluate the interaction based on predefined criteria. 
+        # System prompt explicitly asking for JSON.
+        system_content = """You are an elite Quality Assurance AI for a customer support center. Your sole function is to analyze the provided call transcript and evaluate the interaction based on predefined criteria. 
 
 CRITICAL INSTRUCTIONS:
 1. OUTPUT FORMAT: You must output ONLY a raw, perfectly formatted JSON object. Do not wrap the JSON in markdown blocks (e.g., no ```json ... ```). Do not include any conversational filler, pleasantries, or explanations before or after the JSON.
@@ -101,7 +100,7 @@ CRITICAL INSTRUCTIONS:
 
 JSON SCHEMA REQUIREMENT:
 Your output must exactly match the keys and data types of this JSON structure:
-{{
+{
   "call_summary": "A concise 2-3 sentence summary of the customer's issue and the outcome.",
   "overall_sentiment": "Must be one of: Positive, Neutral, Negative, Mixed.",
   "customer_sentiment": "Must be one of: Delighted, Satisfied, Neutral, Frustrated, Angry.",
@@ -114,7 +113,7 @@ Your output must exactly match the keys and data types of this JSON structure:
   "call_category": "e.g., Billing, Technical Support, Sales, General Inquiry.",
   "resolution_status": "Must be one of: Resolved, Partially Resolved, Unresolved, Escalated.",
   "confidence_score": 0.0
-}}
+}
 
 FEW-SHOT EXAMPLE:
 [Input Transcript]
@@ -127,7 +126,7 @@ Customer: Okay, thank you. That helps.
 Agent: Have a good day.
 
 [Expected Output]
-{{
+{
   "call_summary": "The customer called regarding a 3-day internet outage. The agent identified a local outage, informed the customer of the ETA for a fix, and proactively issued a $20 credit to appease the customer.",
   "overall_sentiment": "Mixed",
   "customer_sentiment": "Frustrated",
@@ -140,16 +139,15 @@ Agent: Have a good day.
   "call_category": "Technical Support",
   "resolution_status": "Partially Resolved",
   "confidence_score": 0.95
-}}
-<|end|>
-<|user|>
-Analyze the following call transcript and generate the required JSON evaluation:
+}"""
 
-[Input Transcript]
-{transcript}
-<|end|>
-<|assistant|>
-"""
+        user_content = f"Analyze the following call transcript and generate the required JSON evaluation:\n\n[Input Transcript]\n{transcript}"
+
+        messages = [
+            {"role": "system", "content": system_content},
+            {"role": "user", "content": user_content}
+        ]
+        prompt = self.tokenizer.apply_chat_template(messages, tokenize=False, add_generation_prompt=True)
         
         generation_args = {
             "max_new_tokens": 512,

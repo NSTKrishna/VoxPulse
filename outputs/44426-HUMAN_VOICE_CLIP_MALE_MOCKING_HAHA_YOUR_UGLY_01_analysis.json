@@ -1,0 +1,26 @@
+{
+    "call_summary": "The customer calls out with a sarcastic remark about their appearance.",
+    "overall_sentiment": "Negative",
+    "customer_sentiment": "Angry",
+    "agent_score": 8,
+    "strengths": [
+        "Sarcastic tone",
+        "Direct confrontation"
+    ],
+    "improvement_areas": [
+        "Clarify expectations and avoid such confrontations"
+    ],
+    "compliance_issues": [],
+    "recommended_next_steps": [
+        "Provide alternative options for payment methods"
+    ],
+    "customer_risk_level": "High",
+    "call_category": "General Inquiry",
+    "resolution_status": "Unresolved",
+    "confidence_score": 0.75,
+    "_metadata": {
+        "report_id": "126d45bd-2fd3-48b8-be13-5051ef6f8a1b",
+        "generated_at": "2026-05-24 19:44:33 UTC",
+        "system_version": "VoxPulse v1.0"
+    }
+}
