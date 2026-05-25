@@ -1,0 +1,1513 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>VoxPulse - Render Deployment Control Center</title>
+    <!-- Modern Premium Typography -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --bg-primary: #080B11;
+            --bg-secondary: #0F1420;
+            --bg-tertiary: #171E30;
+            --border-color: #242F4B;
+            --text-primary: #F3F4F6;
+            --text-secondary: #9CA3AF;
+            --text-muted: #6B7280;
+            
+            --accent-cyan: #00F2FE;
+            --accent-purple: #7F00FF;
+            --accent-gradient: linear-gradient(135deg, #00F2FE 0%, #4FACFE 50%, #7F00FF 100%);
+            
+            --status-success: #10B981;
+            --status-warning: #F59E0B;
+            --status-error: #EF4444;
+            --status-info: #3B82F6;
+            
+            --shadow-glass: 0 8px 32px 0 rgba(0, 0, 0, 0.4);
+            --transition-smooth: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            scrollbar-width: thin;
+            scrollbar-color: var(--border-color) var(--bg-primary);
+        }
+
+        /* Custom Scrollbar */
+        ::-webkit-scrollbar {
+            width: 8px;
+            height: 8px;
+        }
+        ::-webkit-scrollbar-track {
+            background: var(--bg-primary);
+        }
+        ::-webkit-scrollbar-thumb {
+            background: var(--border-color);
+            border-radius: 4px;
+        }
+        ::-webkit-scrollbar-thumb:hover {
+            background: var(--text-muted);
+        }
+
+        body {
+            font-family: 'Inter', system-ui, -apple-system, sans-serif;
+            background-color: var(--bg-primary);
+            color: var(--text-primary);
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            overflow-x: hidden;
+            background-image: 
+                radial-gradient(circle at 10% 20%, rgba(0, 242, 254, 0.05) 0%, transparent 40%),
+                radial-gradient(circle at 90% 80%, rgba(127, 0, 255, 0.06) 0%, transparent 45%);
+            background-attachment: fixed;
+        }
+
+        /* Glassmorphism Header */
+        header {
+            background: rgba(15, 20, 32, 0.7);
+            backdrop-filter: blur(16px);
+            border-bottom: 1px border-color var(--border-color);
+            padding: 1.25rem 2rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            position: sticky;
+            top: 0;
+            z-index: 100;
+        }
+
+        .header-logo {
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+        }
+
+        .logo-icon {
+            font-size: 2rem;
+            animation: pulse-slow 3s infinite ease-in-out;
+        }
+
+        .logo-title {
+            font-weight: 800;
+            font-size: 1.4rem;
+            letter-spacing: -0.5px;
+            background: var(--accent-gradient);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        .logo-badge {
+            background: rgba(0, 242, 254, 0.1);
+            border: 1px solid rgba(0, 242, 254, 0.3);
+            color: var(--accent-cyan);
+            font-size: 0.75rem;
+            padding: 0.15rem 0.6rem;
+            border-radius: 99px;
+            font-weight: 600;
+        }
+
+        /* Container Layout */
+        .dashboard-container {
+            flex: 1;
+            display: flex;
+            max-width: 1440px;
+            margin: 0 auto;
+            width: 100%;
+            padding: 2rem;
+            gap: 2rem;
+        }
+
+        /* Sidebar Navigation */
+        .sidebar {
+            width: 280px;
+            flex-shrink: 0;
+            display: flex;
+            flex-direction: column;
+            gap: 1.5rem;
+        }
+
+        .nav-card {
+            background: var(--bg-secondary);
+            border: 1px solid var(--border-color);
+            border-radius: 16px;
+            padding: 1rem;
+            box-shadow: var(--shadow-glass);
+        }
+
+        .nav-title {
+            font-size: 0.75rem;
+            font-weight: 700;
+            color: var(--text-muted);
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            margin-bottom: 0.75rem;
+            padding-left: 0.5rem;
+        }
+
+        .nav-list {
+            list-style: none;
+            display: flex;
+            flex-direction: column;
+            gap: 0.5rem;
+        }
+
+        .nav-item {
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+            padding: 0.85rem 1rem;
+            border-radius: 12px;
+            cursor: pointer;
+            font-weight: 500;
+            color: var(--text-secondary);
+            transition: var(--transition-smooth);
+            border: 1px solid transparent;
+        }
+
+        .nav-item:hover {
+            color: var(--text-primary);
+            background: rgba(255, 255, 255, 0.03);
+        }
+
+        .nav-item.active {
+            color: var(--accent-cyan);
+            background: rgba(0, 242, 254, 0.08);
+            border-color: rgba(0, 242, 254, 0.2);
+            font-weight: 600;
+        }
+
+        .nav-icon {
+            font-size: 1.15rem;
+        }
+
+        /* Main Workspace Content */
+        .workspace {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            gap: 2rem;
+            min-width: 0; /* Prevents flex children from stretching */
+        }
+
+        .content-card {
+            background: var(--bg-secondary);
+            border: 1px solid var(--border-color);
+            border-radius: 20px;
+            padding: 2rem;
+            box-shadow: var(--shadow-glass);
+            display: none;
+            animation: fadeIn 0.4s ease-out forwards;
+        }
+
+        .content-card.active {
+            display: block;
+        }
+
+        .card-header {
+            margin-bottom: 1.5rem;
+            border-bottom: 1px solid var(--border-color);
+            padding-bottom: 1.25rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .card-title {
+            font-size: 1.5rem;
+            font-weight: 700;
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+        }
+
+        .card-subtitle {
+            font-size: 0.9rem;
+            color: var(--text-secondary);
+            margin-top: 0.25rem;
+        }
+
+        /* Alerts & Warnings */
+        .alert {
+            background: rgba(245, 158, 11, 0.08);
+            border: 1px solid rgba(245, 158, 11, 0.2);
+            border-radius: 12px;
+            padding: 1rem 1.25rem;
+            display: flex;
+            gap: 1rem;
+            margin-bottom: 1.5rem;
+            color: #FBBF24;
+            font-size: 0.9rem;
+            line-height: 1.5;
+        }
+
+        .alert-icon {
+            font-size: 1.5rem;
+            flex-shrink: 0;
+        }
+
+        /* Grid Lists & Checklists */
+        .checklist-container {
+            display: flex;
+            flex-direction: column;
+            gap: 1rem;
+        }
+
+        .checklist-item {
+            background: var(--bg-tertiary);
+            border: 1px solid var(--border-color);
+            border-radius: 12px;
+            padding: 1rem 1.25rem;
+            display: flex;
+            align-items: flex-start;
+            gap: 1rem;
+            transition: var(--transition-smooth);
+            cursor: pointer;
+        }
+
+        .checklist-item:hover {
+            border-color: rgba(0, 242, 254, 0.3);
+            transform: translateY(-2px);
+        }
+
+        .checklist-checkbox {
+            appearance: none;
+            width: 22px;
+            height: 22px;
+            border: 2px solid var(--border-color);
+            border-radius: 6px;
+            cursor: pointer;
+            position: relative;
+            flex-shrink: 0;
+            transition: var(--transition-smooth);
+            background: var(--bg-primary);
+        }
+
+        .checklist-checkbox:checked {
+            background: var(--accent-cyan);
+            border-color: var(--accent-cyan);
+        }
+
+        .checklist-checkbox:checked::after {
+            content: "✓";
+            position: absolute;
+            color: var(--bg-primary);
+            font-size: 14px;
+            font-weight: 800;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+        }
+
+        .checklist-content {
+            flex: 1;
+        }
+
+        .checklist-label {
+            font-weight: 600;
+            font-size: 1rem;
+            margin-bottom: 0.25rem;
+            transition: var(--transition-smooth);
+        }
+
+        .checklist-checkbox:checked ~ .checklist-content .checklist-label {
+            color: var(--text-muted);
+            text-decoration: line-through;
+        }
+
+        .checklist-desc {
+            font-size: 0.85rem;
+            color: var(--text-secondary);
+            line-height: 1.4;
+        }
+
+        /* Code Viewer Section */
+        .code-viewer-container {
+            display: flex;
+            flex-direction: column;
+            gap: 1.5rem;
+        }
+
+        .code-tabs {
+            display: flex;
+            gap: 0.5rem;
+            border-bottom: 1px solid var(--border-color);
+            padding-bottom: 0.5rem;
+        }
+
+        .code-tab-btn {
+            background: transparent;
+            border: 1px solid transparent;
+            color: var(--text-secondary);
+            padding: 0.6rem 1.2rem;
+            border-radius: 8px;
+            cursor: pointer;
+            font-weight: 500;
+            font-size: 0.9rem;
+            transition: var(--transition-smooth);
+        }
+
+        .code-tab-btn:hover {
+            color: var(--text-primary);
+            background: rgba(255, 255, 255, 0.03);
+        }
+
+        .code-tab-btn.active {
+            color: var(--accent-cyan);
+            background: rgba(0, 242, 254, 0.08);
+            border-color: rgba(0, 242, 254, 0.2);
+        }
+
+        .code-block-wrapper {
+            position: relative;
+            background: #05070C;
+            border: 1px solid var(--border-color);
+            border-radius: 12px;
+            overflow: hidden;
+        }
+
+        .code-block-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 0.75rem 1.25rem;
+            background: rgba(15, 20, 32, 0.5);
+            border-bottom: 1px solid var(--border-color);
+        }
+
+        .code-file-name {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.85rem;
+            color: var(--text-secondary);
+        }
+
+        .copy-btn {
+            background: var(--bg-tertiary);
+            border: 1px solid var(--border-color);
+            color: var(--text-secondary);
+            padding: 0.4rem 0.8rem;
+            border-radius: 6px;
+            font-size: 0.8rem;
+            font-weight: 500;
+            cursor: pointer;
+            transition: var(--transition-smooth);
+            display: flex;
+            align-items: center;
+            gap: 0.4rem;
+        }
+
+        .copy-btn:hover {
+            color: var(--text-primary);
+            border-color: var(--text-muted);
+            background: rgba(255, 255, 255, 0.05);
+        }
+
+        .code-pre {
+            padding: 1.5rem;
+            margin: 0;
+            overflow-x: auto;
+            max-height: 480px;
+        }
+
+        .code-style {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.9rem;
+            line-height: 1.6;
+            color: #E5E7EB;
+            white-space: pre;
+        }
+
+        /* Interactive Simulator */
+        .simulator-layout {
+            display: flex;
+            flex-direction: column;
+            gap: 1.5rem;
+        }
+
+        .sim-control-panel {
+            background: var(--bg-tertiary);
+            border: 1px solid var(--border-color);
+            border-radius: 14px;
+            padding: 1.25rem 1.5rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 1rem;
+        }
+
+        .sim-status-indicator {
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+        }
+
+        .status-dot {
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+            background: var(--text-muted);
+            box-shadow: 0 0 8px var(--text-muted);
+            transition: var(--transition-smooth);
+        }
+
+        .status-dot.idle {
+            background: var(--text-muted);
+            box-shadow: 0 0 8px var(--text-muted);
+        }
+
+        .status-dot.running {
+            background: var(--status-warning);
+            box-shadow: 0 0 12px var(--status-warning);
+            animation: pulse-dot 1.5s infinite;
+        }
+
+        .status-dot.success {
+            background: var(--status-success);
+            box-shadow: 0 0 12px var(--status-success);
+        }
+
+        .status-dot.error {
+            background: var(--status-error);
+            box-shadow: 0 0 12px var(--status-error);
+        }
+
+        .status-text {
+            font-weight: 700;
+            font-size: 1rem;
+            letter-spacing: -0.2px;
+        }
+
+        .sim-actions {
+            display: flex;
+            gap: 0.75rem;
+        }
+
+        .btn {
+            padding: 0.65rem 1.25rem;
+            border-radius: 8px;
+            font-weight: 600;
+            font-size: 0.9rem;
+            cursor: pointer;
+            transition: var(--transition-smooth);
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .btn-primary {
+            background: var(--accent-gradient);
+            border: none;
+            color: #080B11;
+        }
+
+        .btn-primary:hover {
+            box-shadow: 0 0 20px rgba(0, 242, 254, 0.4);
+            transform: translateY(-1px);
+        }
+
+        .btn-primary:disabled {
+            background: var(--border-color);
+            color: var(--text-muted);
+            box-shadow: none;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        .btn-secondary {
+            background: var(--bg-secondary);
+            border: 1px solid var(--border-color);
+            color: var(--text-primary);
+        }
+
+        .btn-secondary:hover {
+            border-color: var(--text-muted);
+        }
+
+        /* Pipelines Timeline */
+        .pipeline-timeline {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 1rem;
+        }
+
+        .pipeline-step {
+            background: var(--bg-tertiary);
+            border: 1px solid var(--border-color);
+            border-radius: 12px;
+            padding: 1.25rem;
+            position: relative;
+            transition: var(--transition-smooth);
+            overflow: hidden;
+        }
+
+        .pipeline-step::before {
+            content: "";
+            position: absolute;
+            left: 0;
+            top: 0;
+            bottom: 0;
+            width: 4px;
+            background: var(--border-color);
+            transition: var(--transition-smooth);
+        }
+
+        .pipeline-step.active {
+            border-color: rgba(245, 158, 11, 0.3);
+        }
+
+        .pipeline-step.active::before {
+            background: var(--status-warning);
+        }
+
+        .pipeline-step.complete {
+            border-color: rgba(16, 185, 129, 0.3);
+        }
+
+        .pipeline-step.complete::before {
+            background: var(--status-success);
+        }
+
+        .step-num {
+            font-size: 0.8rem;
+            font-weight: 800;
+            color: var(--text-muted);
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            margin-bottom: 0.25rem;
+        }
+
+        .pipeline-step.active .step-num {
+            color: var(--status-warning);
+        }
+
+        .pipeline-step.complete .step-num {
+            color: var(--status-success);
+        }
+
+        .step-name {
+            font-weight: 700;
+            font-size: 1rem;
+            margin-bottom: 0.5rem;
+        }
+
+        .step-meta {
+            font-size: 0.8rem;
+            color: var(--text-secondary);
+        }
+
+        .step-progress-bar {
+            height: 4px;
+            background: var(--border-color);
+            border-radius: 2px;
+            margin-top: 0.75rem;
+            overflow: hidden;
+            display: none;
+        }
+
+        .pipeline-step.active .step-progress-bar {
+            display: block;
+        }
+
+        .step-progress-fill {
+            height: 100%;
+            background: var(--status-warning);
+            width: 0%;
+            transition: width 0.1s linear;
+        }
+
+        /* Console Terminal Container */
+        .terminal-container {
+            background: #030509;
+            border: 1px solid var(--border-color);
+            border-radius: 14px;
+            overflow: hidden;
+            display: flex;
+            flex-direction: column;
+            box-shadow: inset 0 4px 20px rgba(0,0,0,0.8);
+        }
+
+        .terminal-header {
+            background: rgba(15, 20, 32, 0.8);
+            border-bottom: 1px solid var(--border-color);
+            padding: 0.6rem 1.25rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .terminal-title {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.8rem;
+            color: var(--text-secondary);
+            font-weight: 600;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .terminal-dot {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            background: var(--status-success);
+        }
+
+        .terminal-controls {
+            display: flex;
+            gap: 6px;
+        }
+
+        .term-dot {
+            width: 10px;
+            height: 10px;
+            border-radius: 50%;
+        }
+
+        .term-dot-red { background: #FF5F56; }
+        .term-dot-yellow { background: #FFBD2E; }
+        .term-dot-green { background: #27C93F; }
+
+        .terminal-body {
+            padding: 1.25rem;
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.85rem;
+            line-height: 1.6;
+            color: #10B981;
+            height: 320px;
+            overflow-y: auto;
+            white-space: pre-wrap;
+            display: flex;
+            flex-direction: column;
+            gap: 0.35rem;
+        }
+
+        .log-line {
+            opacity: 0;
+            transform: translateY(4px);
+            animation: logEntry 0.2s cubic-bezier(0.18, 0.89, 0.32, 1.28) forwards;
+        }
+
+        .log-time {
+            color: #6B7280;
+            margin-right: 0.5rem;
+        }
+
+        .log-tag {
+            font-weight: bold;
+            margin-right: 0.5rem;
+        }
+
+        .log-tag.info { color: #3B82F6; }
+        .log-tag.success { color: #10B981; }
+        .log-tag.warn { color: #F59E0B; }
+        .log-tag.error { color: #EF4444; }
+
+        /* Guide Layout */
+        .guide-steps {
+            display: flex;
+            flex-direction: column;
+            gap: 2rem;
+        }
+
+        .guide-step {
+            display: flex;
+            gap: 1.5rem;
+        }
+
+        .guide-badge {
+            width: 36px;
+            height: 36px;
+            border-radius: 50%;
+            background: rgba(0, 242, 254, 0.1);
+            border: 1px solid rgba(0, 242, 254, 0.2);
+            color: var(--accent-cyan);
+            font-weight: 700;
+            font-size: 1.1rem;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            flex-shrink: 0;
+        }
+
+        .guide-content {
+            flex: 1;
+            padding-top: 0.25rem;
+        }
+
+        .guide-title {
+            font-size: 1.15rem;
+            font-weight: 700;
+            margin-bottom: 0.5rem;
+        }
+
+        .guide-desc {
+            color: var(--text-secondary);
+            font-size: 0.95rem;
+            line-height: 1.6;
+            margin-bottom: 1rem;
+        }
+
+        .guide-box {
+            background: var(--bg-tertiary);
+            border: 1px solid var(--border-color);
+            border-radius: 12px;
+            padding: 1.25rem;
+            margin-top: 0.75rem;
+        }
+
+        .guide-code-pre {
+            background: #030509;
+            padding: 1rem;
+            border-radius: 8px;
+            margin: 0.75rem 0;
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.85rem;
+            overflow-x: auto;
+            color: #E5E7EB;
+            border: 1px solid var(--border-color);
+        }
+
+        .guide-list {
+            margin-left: 1.5rem;
+            margin-top: 0.5rem;
+            display: flex;
+            flex-direction: column;
+            gap: 0.4rem;
+        }
+
+        /* Success Deploy Card Overlay */
+        .deployed-modal {
+            background: rgba(16, 185, 129, 0.08);
+            border: 1px solid rgba(16, 185, 129, 0.2);
+            border-radius: 16px;
+            padding: 2rem;
+            text-align: center;
+            display: none;
+            animation: scaleIn 0.5s cubic-bezier(0.34, 1.56, 0.64, 1) forwards;
+            margin-top: 1.5rem;
+        }
+
+        .deployed-modal.active {
+            display: block;
+        }
+
+        .modal-icon {
+            font-size: 3rem;
+            color: var(--status-success);
+            margin-bottom: 1rem;
+            animation: bounce 2s infinite;
+        }
+
+        .modal-title {
+            font-size: 1.4rem;
+            font-weight: 800;
+            color: var(--status-success);
+            margin-bottom: 0.5rem;
+        }
+
+        .modal-desc {
+            color: var(--text-secondary);
+            max-width: 500px;
+            margin: 0 auto 1.5rem;
+            font-size: 0.95rem;
+            line-height: 1.5;
+        }
+
+        /* Keyframes */
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        @keyframes logEntry {
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        @keyframes pulse-slow {
+            0%, 100% { opacity: 1; transform: scale(1); }
+            50% { opacity: 0.8; transform: scale(1.05); }
+        }
+
+        @keyframes pulse-dot {
+            0% { transform: scale(1); box-shadow: 0 0 12px rgba(245, 158, 11, 0.5); }
+            50% { transform: scale(1.15); box-shadow: 0 0 20px rgba(245, 158, 11, 0.8); }
+            100% { transform: scale(1); box-shadow: 0 0 12px rgba(245, 158, 11, 0.5); }
+        }
+
+        @keyframes scaleIn {
+            from { transform: scale(0.9); opacity: 0; }
+            to { transform: scale(1); opacity: 1; }
+        }
+
+        @keyframes bounce {
+            0%, 100% { transform: translateY(0); }
+            50% { transform: translateY(-8px); }
+        }
+
+        /* Responsive */
+        @media (max-width: 1024px) {
+            .dashboard-container {
+                flex-direction: column;
+            }
+            .sidebar {
+                width: 100%;
+            }
+            .pipeline-timeline {
+                grid-template-columns: 1fr 1fr;
+            }
+        }
+
+        @media (max-width: 640px) {
+            .pipeline-timeline {
+                grid-template-columns: 1fr;
+            }
+            header {
+                flex-direction: column;
+                gap: 1rem;
+                text-align: center;
+            }
+        }
+    </style>
+</head>
+<body>
+
+    <!-- Header Logo & Status Banner -->
+    <header>
+        <div class="header-logo">
+            <span class="logo-icon">🎙️</span>
+            <div>
+                <span class="logo-title">VoxPulse</span>
+                <span class="logo-badge">Render Center</span>
+            </div>
+        </div>
+        <div style="display: flex; gap: 1rem; align-items: center;">
+            <span style="font-size: 0.85rem; color: var(--text-secondary)">Deployment Assistant UI</span>
+            <div style="display: flex; align-items: center; gap: 0.5rem; background: rgba(16, 185, 129, 0.1); border: 1px solid rgba(16, 185, 129, 0.2); padding: 0.4rem 0.8rem; border-radius: 8px;">
+                <span style="width: 8px; height: 8px; background: var(--status-success); border-radius: 50%;"></span>
+                <span style="font-size: 0.8rem; font-weight: 600; color: var(--status-success);">Config Files Generated</span>
+            </div>
+        </div>
+    </header>
+
+    <!-- Main Container -->
+    <div class="dashboard-container">
+        
+        <!-- Sidebar Navigation -->
+        <aside class="sidebar">
+            <div class="nav-card">
+                <h3 class="nav-title">Navigation</h3>
+                <ul class="nav-list">
+                    <li class="nav-item active" onclick="switchTab('tab-prereqs', this)">
+                        <span class="nav-icon">📋</span>
+                        <span>Prerequisites Checklist</span>
+                    </li>
+                    <li class="nav-item" onclick="switchTab('tab-configs', this)">
+                        <span class="nav-icon">📁</span>
+                        <span>Configuration Files</span>
+                    </li>
+                    <li class="nav-item" onclick="switchTab('tab-simulator', this)">
+                        <span class="nav-icon">⚡</span>
+                        <span>Deployment Simulator</span>
+                    </li>
+                    <li class="nav-item" onclick="switchTab('tab-guide', this)">
+                        <span class="nav-icon">🗺️</span>
+                        <span>Render Step-by-Step</span>
+                    </li>
+                </ul>
+            </div>
+            
+            <div class="nav-card" style="font-size: 0.85rem; line-height: 1.5; color: var(--text-secondary)">
+                <h4 style="font-weight: 700; color: var(--text-primary); margin-bottom: 0.5rem; display: flex; align-items: center; gap: 0.4rem;">
+                    💡 Architectural Tip
+                </h4>
+                VoxPulse relies on heavy deep-learning workloads. To ensure it loads fast and performs diarization without crashes, we containerized it via **Docker** to easily compile C-libraries (Pango/Cairo) for PDF outputs!
+            </div>
+        </aside>
+
+        <!-- Main Workspace -->
+        <main class="workspace">
+            
+            <!-- Tab: Prerequisites Checklist -->
+            <section id="tab-prereqs" class="content-card active">
+                <div class="card-header">
+                    <div>
+                        <h2 class="card-title">📋 Prerequisites Checklist</h2>
+                        <p class="card-subtitle">Ensure these settings are ready before initiating cloud deployment.</p>
+                    </div>
+                    <span style="font-size: 0.8rem; background: var(--bg-tertiary); padding: 0.4rem 0.8rem; border-radius: 6px; font-family: monospace; border: 1px solid var(--border-color);">Status: <span id="checklist-pct" style="color: var(--accent-cyan)">0%</span> Done</span>
+                </div>
+
+                <div class="alert">
+                    <span class="alert-icon">⚠️</span>
+                    <div>
+                        <strong>Resource Constraint Warning:</strong>
+                        VoxPulse utilizes deep-learning models. Baseline memory requirements require at least **2GB RAM** (Render Starter Tier, $7/mo). Deploying on Render Free Tier (512MB RAM) will immediately prompt Out-Of-Memory (OOM) compilation failures.
+                    </div>
+                </div>
+
+                <div class="checklist-container">
+                    <div class="checklist-item" onclick="toggleCheckbox('check-hf-agree')">
+                        <input type="checkbox" id="check-hf-agree" class="checklist-checkbox" onchange="updateChecklistProgress()">
+                        <div class="checklist-content">
+                            <h4 class="checklist-label">Accept Pyannote Model Terms on Hugging Face</h4>
+                            <p class="checklist-desc">Go to <a href="https://huggingface.co/pyannote/speaker-diarization-3.1" target="_blank" style="color: var(--accent-cyan); text-decoration: none;">pyannote/speaker-diarization-3.1</a> and click "Agree and Access Model". This is mandatory for pyannote.audio weights to download.</p>
+                        </div>
+                    </div>
+
+                    <div class="checklist-item" onclick="toggleCheckbox('check-hf-token')">
+                        <input type="checkbox" id="check-hf-token" class="checklist-checkbox" onchange="updateChecklistProgress()">
+                        <div class="checklist-content">
+                            <h4 class="checklist-label">Generate Hugging Face Write Token</h4>
+                            <p class="checklist-desc">Generate a Read/Write API token under Hugging Face profile settings &rarr; Access Tokens. You will paste this as the <code>HF_TOKEN</code> environment variable on Render.</p>
+                        </div>
+                    </div>
+
+                    <div class="checklist-item" onclick="toggleCheckbox('check-github-push')">
+                        <input type="checkbox" id="check-github-push" class="checklist-checkbox" onchange="updateChecklistProgress()">
+                        <div class="checklist-content">
+                            <h4 class="checklist-label">Push VoxPulse to GitHub Repository</h4>
+                            <p class="checklist-desc">Deploying on Render Blueprint requires linking your private or public GitHub repo. Commit the newly generated <code>Dockerfile</code> and <code>render.yaml</code>, and push to main.</p>
+                        </div>
+                    </div>
+
+                    <div class="checklist-item" onclick="toggleCheckbox('check-render-acc')">
+                        <input type="checkbox" id="check-render-acc" class="checklist-checkbox" onchange="updateChecklistProgress()">
+                        <div class="checklist-content">
+                            <h4 class="checklist-label">Create Render Account</h4>
+                            <p class="checklist-desc">Sign up at <a href="https://dashboard.render.com" target="_blank" style="color: var(--accent-cyan); text-decoration: none;">dashboard.render.com</a> and link your GitHub account.</p>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Tab: Configuration Files -->
+            <section id="tab-configs" class="content-card">
+                <div class="card-header">
+                    <div>
+                        <h2 class="card-title">📁 Generated Configuration Files</h2>
+                        <p class="card-subtitle">These deployment files have been injected into your root workspace directory.</p>
+                    </div>
+                </div>
+
+                <div class="code-viewer-container">
+                    <div class="code-tabs">
+                        <button class="code-tab-btn active" onclick="switchCode('code-dockerfile', this)">Dockerfile</button>
+                        <button class="code-tab-btn" onclick="switchCode('code-yaml', this)">render.yaml</button>
+                        <button class="code-tab-btn" onclick="switchCode('code-ignore', this)">.dockerignore</button>
+                    </div>
+
+                    <!-- Dockerfile Code Box -->
+                    <div id="code-dockerfile" class="code-block-wrapper" style="display: block;">
+                        <div class="code-block-header">
+                            <span class="code-file-name">Dockerfile</span>
+                            <button class="copy-btn" onclick="copyCode('pre-dockerfile')">
+                                <span>📋</span> <span class="copy-text">Copy Code</span>
+                            </button>
+                        </div>
+                        <pre class="code-pre"><code id="pre-dockerfile" class="code-style">FROM python:3.10-slim
+
+# Prevent python from buffering stdout/stderr (critical for real-time Render logs)
+ENV PYTHONUNBUFFERED=1
+ENV PYTHONDONTWRITEBYTECODE=1
+
+# Install system dependencies (ffmpeg for audio, pango/cairo for PDF generation)
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    ffmpeg \
+    libpango-1.0-0 \
+    libpangoft2-1.0-0 \
+    libharfbuzz-0b \
+    libjpeg-dev \
+    libopenjp2-7-dev \
+    libffi-dev \
+    shared-mime-info \
+    libcairo2 \
+    libglib2.0-0 \
+    build-essential \
+    && rm -rf /var/lib/apt/lists/*
+
+WORKDIR /app
+
+# Copy requirements and install python packages
+COPY requirements.txt .
+RUN pip install --no-cache-dir -r requirements.txt
+
+# Copy the rest of the application
+COPY . .
+
+# Expose port (Render sets this dynamically, but Gradio uses it)
+EXPOSE 7860
+
+# Run the app
+CMD ["python", "app.py"]</code></pre>
+                    </div>
+
+                    <!-- render.yaml Code Box -->
+                    <div id="code-yaml" class="code-block-wrapper" style="display: none;">
+                        <div class="code-block-header">
+                            <span class="code-file-name">render.yaml</span>
+                            <button class="copy-btn" onclick="copyCode('pre-yaml')">
+                                <span>📋</span> <span class="copy-text">Copy Code</span>
+                            </button>
+                        </div>
+                        <pre class="code-pre"><code id="pre-yaml" class="code-style">services:
+  - type: web
+    name: voxpulse
+    env: docker
+    dockerfilePath: Dockerfile
+    plan: starter # Starter plan (2GB RAM) is recommended to prevent OOM
+    startCommand: python app.py
+    envVars:
+      - key: HF_TOKEN
+        sync: false # Prompts the user for their Hugging Face token in the UI
+      - key: PYTHONUNBUFFERED
+        value: "true"
+      - key: PORT
+        value: "7860"</code></pre>
+                    </div>
+
+                    <!-- .dockerignore Code Box -->
+                    <div id="code-ignore" class="code-block-wrapper" style="display: none;">
+                        <div class="code-block-header">
+                            <span class="code-file-name">.dockerignore</span>
+                            <button class="copy-btn" onclick="copyCode('pre-ignore')">
+                                <span>📋</span> <span class="copy-text">Copy Code</span>
+                            </button>
+                        </div>
+                        <pre class="code-pre"><code id="pre-ignore" class="code-style">.git
+.gitignore
+.env
+venv/
+__pycache__/
+*.pyc
+outputs/
+.gradio/
+sample_audio/</code></pre>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Tab: Deployment Simulator -->
+            <section id="tab-simulator" class="content-card">
+                <div class="card-header">
+                    <div>
+                        <h2 class="card-title">⚡ Interactive Deployment Simulator</h2>
+                        <p class="card-subtitle">Understand and preview the full cloud execution cycle before creating the live Render instance.</p>
+                    </div>
+                </div>
+
+                <div class="simulator-layout">
+                    <!-- Control Bar -->
+                    <div class="sim-control-panel">
+                        <div class="sim-status-indicator">
+                            <span id="sim-dot" class="status-dot idle"></span>
+                            <span id="sim-status-text" class="status-text">Ready to Simulate</span>
+                        </div>
+                        <div class="sim-actions">
+                            <button id="sim-btn-start" class="btn btn-primary" onclick="startSimulation()">
+                                <span>▶</span> Start Simulation
+                            </button>
+                            <button id="sim-btn-reset" class="btn btn-secondary" onclick="resetSimulation()" disabled>
+                                <span>🔄</span> Reset
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- Pipeline Steps -->
+                    <div class="pipeline-timeline">
+                        <div id="step1" class="pipeline-step">
+                            <div class="step-num">Step 1</div>
+                            <div class="step-name">Build Stage</div>
+                            <div class="step-meta">Docker Build & OS Libs</div>
+                            <div class="step-progress-bar">
+                                <div id="pfill-1" class="step-progress-fill"></div>
+                            </div>
+                        </div>
+
+                        <div id="step2" class="pipeline-step">
+                            <div class="step-num">Step 2</div>
+                            <div class="step-name">Config Bind</div>
+                            <div class="step-meta">Inject HF_TOKEN & Port</div>
+                            <div class="step-progress-bar">
+                                <div id="pfill-2" class="step-progress-fill"></div>
+                            </div>
+                        </div>
+
+                        <div id="step3" class="pipeline-step">
+                            <div class="step-num">Step 3</div>
+                            <div class="step-name">Model Prep</div>
+                            <div class="step-meta">Download Weights (Qwen)</div>
+                            <div class="step-progress-bar">
+                                <div id="pfill-3" class="step-progress-fill"></div>
+                            </div>
+                        </div>
+
+                        <div id="step4" class="pipeline-step">
+                            <div class="step-num">Step 4</div>
+                            <div class="step-name">Server Boot</div>
+                            <div class="step-meta">Live Port Healthcheck</div>
+                            <div class="step-progress-bar">
+                                <div id="pfill-4" class="step-progress-fill"></div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Console Logs Terminal -->
+                    <div class="terminal-container">
+                        <div class="terminal-header">
+                            <div class="terminal-title">
+                                <span class="terminal-dot"></span>
+                                <span>Console Output &mdash; Render Build Logs</span>
+                            </div>
+                            <div class="terminal-controls">
+                                <span class="term-dot term-dot-red"></span>
+                                <span class="term-dot term-dot-yellow"></span>
+                                <span class="term-dot term-dot-green"></span>
+                            </div>
+                        </div>
+                        <div id="terminal-body" class="terminal-body">
+                            <span class="log-line" style="color: #6B7280;">[SYSTEM] Terminal ready. Click "Start Simulation" to launch the pipeline execution...</span>
+                        </div>
+                    </div>
+
+                    <!-- Deployed Modal -->
+                    <div id="deployed-modal" class="deployed-modal">
+                        <div class="modal-icon">🎉</div>
+                        <h3 class="modal-title">VoxPulse Deployed Successfully!</h3>
+                        <p class="modal-desc">The container is up and running in secure production mode. It successfully bound to Port 7860, pulled the 380M parameter Qwen2.5 weights, and is serving requests over secure TLS routing.</p>
+                        <a href="https://voxpulse.onrender.com" target="_blank" class="btn btn-primary" onclick="event.preventDefault(); alert('This is a simulated deployment! To deploy for real, follow the steps on the \'Render Step-by-Step\' tab.');">
+                            🌐 Open Live Application
+                        </a>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Tab: Step-by-Step Guide -->
+            <section id="tab-guide" class="content-card">
+                <div class="card-header">
+                    <div>
+                        <h2 class="card-title">🗺️ Step-by-Step Operations on Render Portal</h2>
+                        <p class="card-subtitle">Follow these direct steps to provision VoxPulse on the actual Render dashboard.</p>
+                    </div>
+                </div>
+
+                <div class="guide-steps">
+                    <!-- Step 1 -->
+                    <div class="guide-step">
+                        <div class="guide-badge">1</div>
+                        <div class="guide-content">
+                            <h3 class="guide-title">Connect Repository to Render</h3>
+                            <p class="guide-desc">Log into the <a href="https://dashboard.render.com" target="_blank" style="color: var(--accent-cyan)">Render Dashboard</a>, click the blue <strong>"New +"</strong> button at the top right, and select <strong>"Blueprint"</strong>.</p>
+                            <p class="guide-desc">Connect your GitHub account and select your <code>VoxPulse</code> repository from the list.</p>
+                        </div>
+                    </div>
+
+                    <!-- Step 2 -->
+                    <div class="guide-step">
+                        <div class="guide-badge">2</div>
+                        <div class="guide-content">
+                            <h3 class="guide-title">Configure Blueprint Details</h3>
+                            <p class="guide-desc">Render will scan the code and automatically detect the <code>render.yaml</code> blueprint file! Configure the following inputs in the form:</p>
+                            <div class="guide-box">
+                                <ul class="guide-list" style="list-style: square;">
+                                    <li><strong>Service Group Name:</strong> <code>voxpulse-group</code></li>
+                                    <li><strong>Branch:</strong> <code>main</code> (or your current working branch)</li>
+                                    <li><strong>HF_TOKEN (Hugging Face Token):</strong> Paste your secure token (e.g. <code>hf_abc123...</code>)</li>
+                                </ul>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Step 3 -->
+                    <div class="guide-step">
+                        <div class="guide-badge">3</div>
+                        <div class="guide-content">
+                            <h3 class="guide-title">Deploy and Monitor</h3>
+                            <p class="guide-desc">Click **"Approve"** at the bottom of the page. Render will spin up the virtual machine, fetch the repository code, parse the <code>Dockerfile</code>, install ffmpeg and OS packages, and launch the server.</p>
+                            <p class="guide-desc">Once the status changes to green <strong>"Live"</strong>, Render will output the public URL (e.g., <code>https://voxpulse.onrender.com</code>). Open this URL to access your live VoxPulse QA Suite!</p>
+                        </div>
+                    </div>
+                </div>
+            </section>
+        </main>
+    </div>
+
+    <!-- Scripting for UI Logic -->
+    <script>
+        // Tab switching logic
+        function switchTab(tabId, el) {
+            // Update nav selection
+            document.querySelectorAll('.nav-item').forEach(item => item.classList.remove('active'));
+            el.classList.add('active');
+
+            // Update content display
+            document.querySelectorAll('.content-card').forEach(card => card.classList.remove('active'));
+            document.getElementById(tabId).classList.add('active');
+        }
+
+        // Code block switching logic
+        function switchCode(codeId, el) {
+            document.querySelectorAll('.code-tab-btn').forEach(btn => btn.classList.remove('active'));
+            el.classList.add('active');
+
+            document.querySelectorAll('.code-block-wrapper').forEach(block => block.style.display = 'none');
+            document.getElementById(codeId).style.display = 'block';
+        }
+
+        // Copy code script
+        function copyCode(elementId) {
+            const codeText = document.getElementById(elementId).textContent;
+            navigator.clipboard.writeText(codeText).then(() => {
+                const btn = document.querySelector(`#${elementId}`).parentElement.previousElementSibling.querySelector('.copy-btn');
+                const copyTextSpan = btn.querySelector('.copy-text');
+                
+                btn.style.borderColor = 'var(--status-success)';
+                btn.style.color = 'var(--status-success)';
+                copyTextSpan.textContent = 'Copied!';
+                
+                setTimeout(() => {
+                    btn.style.borderColor = '';
+                    btn.style.color = '';
+                    copyTextSpan.textContent = 'Copy Code';
+                }, 2000);
+            });
+        }
+
+        // Checklist completion logic
+        function toggleCheckbox(id) {
+            // Prevent event loop from double toggling when label click bubbles to item click
+            const chk = document.getElementById(id);
+            if (event.target !== chk) {
+                chk.checked = !chk.checked;
+                updateChecklistProgress();
+            }
+        }
+
+        function updateChecklistProgress() {
+            const total = 4;
+            let checked = 0;
+            if (document.getElementById('check-hf-agree').checked) checked++;
+            if (document.getElementById('check-hf-token').checked) checked++;
+            if (document.getElementById('check-github-push').checked) checked++;
+            if (document.getElementById('check-render-acc').checked) checked++;
+
+            const pct = Math.round((checked / total) * 100);
+            document.getElementById('checklist-pct').textContent = `${pct}%`;
+        }
+
+        // --- SIMULATOR ENGINE ---
+        let simInterval = null;
+        let simSteps = [];
+        let currentStepIndex = 0;
+
+        const buildLogs = [
+            { t: "16:20:01", tag: "info", content: "Retrieving latest git commit from GitHub repository (branch: main)..." },
+            { t: "16:20:02", tag: "info", content: "Successfully fetched commit hash [ae4d812]" },
+            { t: "16:20:03", tag: "info", content: "Initiating multi-stage Docker build pipeline..." },
+            { t: "16:20:04", tag: "info", content: "Step 1/7 : FROM python:3.10-slim" },
+            { t: "16:20:04", tag: "info", content: " ---> 64d95267104f" },
+            { t: "16:20:05", tag: "info", content: "Step 2/7 : ENV PYTHONUNBUFFERED=1 PYTHONDONTWRITEBYTECODE=1" },
+            { t: "16:20:05", tag: "info", content: " ---> Running in temporary build container..." },
+            { t: "16:20:06", tag: "info", content: "Step 3/7 : RUN apt-get update && apt-get install -y ffmpeg libpango-1.0-0 libpangoft2-1.0-0 libcairo2 build-essential" },
+            { t: "16:20:07", tag: "info", content: "Get:1 http://deb.debian.org/debian bookworm InRelease [151 kB]" },
+            { t: "16:20:09", tag: "info", content: "Get:2 http://deb.debian.org/debian bookworm-updates InRelease [55.4 kB]" },
+            { t: "16:20:11", tag: "info", content: "Installing dependency tree: ffmpeg, libpango, libcairo2, libglib2.0..." },
+            { t: "16:20:13", tag: "info", content: "Setting up ffmpeg (7:5.1.4-0+deb12u1) ..." },
+            { t: "16:20:15", tag: "info", content: "Setting up libcairo2:amd64 (1.16.0-7) ..." },
+            { t: "16:20:17", tag: "info", content: "Setting up libpango-1.0-0:amd64 (1.50.12+ds-1) ..." },
+            { t: "16:20:18", tag: "success", content: "System packages successfully compiled & cached." },
+            { t: "16:20:19", tag: "info", content: "Step 4/7 : WORKDIR /app" },
+            { t: "16:20:20", tag: "info", content: "Step 5/7 : COPY requirements.txt ." },
+            { t: "16:20:21", tag: "info", content: "Step 6/7 : RUN pip install --no-cache-dir -r requirements.txt" },
+            { t: "16:20:22", tag: "info", content: "Collecting torch>=2.0.0 (from -r requirements.txt)" },
+            { t: "16:20:24", tag: "info", content: "  Downloading torch-2.0.0-cp310-cp310-manylinux1_x86_64.whl (619.9 MB)" },
+            { t: "16:20:28", tag: "info", content: "Collecting pyannote.audio>=3.1.1 (from -r requirements.txt)" },
+            { t: "16:20:30", tag: "info", content: "  Downloading pyannote.audio-3.1.1-py3-none-any.whl (392 kB)" },
+            { t: "16:20:31", tag: "info", content: "Collecting gradio>=4.26.0 (from -r requirements.txt)" },
+            { t: "16:20:33", tag: "info", content: "  Downloading gradio-4.26.0-py3-none-any.whl (12.3 MB)" },
+            { t: "16:20:35", tag: "info", content: "Installing compiled python wheels..." },
+            { t: "16:20:38", tag: "success", content: "Python dependencies successfully installed." },
+            { t: "16:20:39", tag: "info", content: "Step 7/7 : COPY . ." },
+            { t: "16:20:40", tag: "info", content: "Exporting image layers to Docker Registry..." },
+            { t: "16:20:41", tag: "success", content: "Docker image built successfully! Image size: 1.48 GB" },
+            { t: "16:20:42", tag: "success", content: "BUILD PIPELINE COMPLETE." }
+        ];
+
+        const configLogs = [
+            { t: "16:20:43", tag: "info", content: "Initiating Container Release & Provisioning phase..." },
+            { t: "16:20:44", tag: "info", content: "Binding secure environment parameters..." },
+            { t: "16:20:45", tag: "info", content: "Injected variable [PYTHONUNBUFFERED] &rarr; true" },
+            { t: "16:20:46", tag: "info", content: "Injected variable [PORT] &rarr; 7860" },
+            { t: "16:20:47", tag: "info", content: "Retrieving secure HF_TOKEN..." },
+            { t: "16:20:48", tag: "success", content: "HF_TOKEN successfully validated against Hugging Face API!" },
+            { t: "16:20:49", tag: "info", content: "Provisioning hardware plan: starter (2GB RAM, CPU-optimised)..." },
+            { t: "16:20:50", tag: "success", content: "Hardware instance allocated successfully." }
+        ];
+
+        const modelLogs = [
+            { t: "16:20:51", tag: "info", content: "Launching App Container Instance [voxpulse-7fbd89a]..." },
+            { t: "16:20:52", tag: "info", content: "Running command: python app.py" },
+            { t: "16:20:53", tag: "info", content: "Initializing models on CPU device..." },
+            { t: "16:20:54", tag: "info", content: "Whisper-base: Verifying and pulling model weights from Hugging Face hub..." },
+            { t: "16:20:56", tag: "info", content: "Downloading Whisper weights:  48%|████████      | 70M/140M" },
+            { t: "16:20:58", tag: "info", content: "Downloading Whisper weights: 100%|██████████████| 140M/140M" },
+            { t: "16:20:59", tag: "success", content: "Whisper Transcriber loaded into memory." },
+            { t: "16:21:00", tag: "info", content: "Pyannote: Fetching speaker-diarization-3.1 pipelines..." },
+            { t: "16:21:02", tag: "success", content: "Pyannote AudioDiarizer loaded into memory." },
+            { t: "16:21:03", tag: "info", content: "CallAnalyzer: Fetching tokenizer and Qwen2.5-0.5B-Instruct weights..." },
+            { t: "16:21:05", tag: "info", content: "Downloading Qwen weights:  32%|████▍         | 120M/380M" },
+            { t: "16:21:07", tag: "info", content: "Downloading Qwen weights:  78%|██████████▍    | 296M/380M" },
+            { t: "16:21:09", tag: "info", content: "Downloading Qwen weights: 100%|██████████████| 380M/380M" },
+            { t: "16:21:10", tag: "success", content: "CallAnalyzer LLM loaded into memory." },
+            { t: "16:21:11", tag: "success", content: "All AI model pipelines loaded successfully." }
+        ];
+
+        const serverLogs = [
+            { t: "16:21:12", tag: "info", content: "Starting Gradio interface orchestrator..." },
+            { t: "16:21:13", tag: "info", content: "Binding Gradio Blocks server to 0.0.0.0:7860" },
+            { t: "16:21:14", tag: "info", content: "Performing internal healthcheck on port 7860..." },
+            { t: "16:21:15", tag: "success", content: "Port 7860 responds with [HTTP 200 OK]. Heartbeat active." },
+            { t: "16:21:16", tag: "info", content: "Active routing tunnel configured successfully." },
+            { t: "16:21:17", tag: "success", content: "Deploy State: LIVE" },
+            { t: "16:21:18", tag: "success", content: "Service is serving requests at: https://voxpulse.onrender.com" }
+        ];
+
+        function addLog(t, tag, content) {
+            const body = document.getElementById('terminal-body');
+            const line = document.createElement('div');
+            line.className = 'log-line';
+            
+            let color = '#F3F4F6';
+            if (tag === 'success') color = '#10B981';
+            else if (tag === 'warn') color = '#F59E0B';
+            else if (tag === 'error') color = '#EF4444';
+            else if (tag === 'info') color = '#60A5FA';
+
+            line.innerHTML = `<span class="log-time">[${t}]</span><span class="log-tag ${tag}">[${tag.toUpperCase()}]</span><span style="color: ${color}">${content}</span>`;
+            body.appendChild(line);
+            body.scrollTop = body.scrollHeight;
+        }
+
+        function resetSimulation() {
+            clearInterval(simInterval);
+            document.getElementById('terminal-body').innerHTML = '<span class="log-line" style="color: #6B7280;">[SYSTEM] Terminal reset. Click "Start Simulation" to launch pipeline execution...</span>';
+            
+            // Reset status dot
+            const dot = document.getElementById('sim-dot');
+            dot.className = 'status-dot idle';
+            document.getElementById('sim-status-text').textContent = 'Ready to Simulate';
+
+            // Reset pipeline steps
+            for (let i = 1; i <= 4; i++) {
+                const el = document.getElementById(`step${i}`);
+                el.className = 'pipeline-step';
+                document.getElementById(`pfill-${i}`).style.width = '0%';
+            }
+
+            // Reset buttons
+            document.getElementById('sim-btn-start').disabled = false;
+            document.getElementById('sim-btn-reset').disabled = true;
+
+            // Hide success card
+            document.getElementById('deployed-modal').classList.remove('active');
+        }
+
+        function startSimulation() {
+            resetSimulation();
+            
+            document.getElementById('sim-btn-start').disabled = true;
+            document.getElementById('sim-btn-reset').disabled = false;
+            
+            const dot = document.getElementById('sim-dot');
+            dot.className = 'status-dot running';
+            document.getElementById('sim-status-text').textContent = 'Deploying...';
+
+            let logIndex = 0;
+            let phase = 1;
+            let currentLogs = buildLogs;
+            
+            document.getElementById('step1').classList.add('active');
+            
+            simInterval = setInterval(() => {
+                if (phase === 1) {
+                    if (logIndex < buildLogs.length) {
+                        const log = buildLogs[logIndex];
+                        addLog(log.t, log.tag, log.content);
+                        
+                        // Progress bar animation
+                        const pct = Math.round((logIndex / buildLogs.length) * 100);
+                        document.getElementById('pfill-1').style.width = `${pct}%`;
+                        logIndex++;
+                    } else {
+                        document.getElementById('pfill-1').style.width = '100%';
+                        document.getElementById('step1').classList.remove('active');
+                        document.getElementById('step1').classList.add('complete');
+                        
+                        phase = 2;
+                        logIndex = 0;
+                        document.getElementById('step2').classList.add('active');
+                    }
+                } else if (phase === 2) {
+                    if (logIndex < configLogs.length) {
+                        const log = configLogs[logIndex];
+                        addLog(log.t, log.tag, log.content);
+                        
+                        const pct = Math.round((logIndex / configLogs.length) * 100);
+                        document.getElementById('pfill-2').style.width = `${pct}%`;
+                        logIndex++;
+                    } else {
+                        document.getElementById('pfill-2').style.width = '100%';
+                        document.getElementById('step2').classList.remove('active');
+                        document.getElementById('step2').classList.add('complete');
+                        
+                        phase = 3;
+                        logIndex = 0;
+                        document.getElementById('step3').classList.add('active');
+                    }
+                } else if (phase === 3) {
+                    if (logIndex < modelLogs.length) {
+                        const log = modelLogs[logIndex];
+                        addLog(log.t, log.tag, log.content);
+                        
+                        const pct = Math.round((logIndex / modelLogs.length) * 100);
+                        document.getElementById('pfill-3').style.width = `${pct}%`;
+                        logIndex++;
+                    } else {
+                        document.getElementById('pfill-3').style.width = '100%';
+                        document.getElementById('step3').classList.remove('active');
+                        document.getElementById('step3').classList.add('complete');
+                        
+                        phase = 4;
+                        logIndex = 0;
+                        document.getElementById('step4').classList.add('active');
+                    }
+                } else if (phase === 4) {
+                    if (logIndex < serverLogs.length) {
+                        const log = serverLogs[logIndex];
+                        addLog(log.t, log.tag, log.content);
+                        
+                        const pct = Math.round((logIndex / serverLogs.length) * 100);
+                        document.getElementById('pfill-4').style.width = `${pct}%`;
+                        logIndex++;
+                    } else {
+                        document.getElementById('pfill-4').style.width = '100%';
+                        document.getElementById('step4').classList.remove('active');
+                        document.getElementById('step4').classList.add('complete');
+                        
+                        clearInterval(simInterval);
+                        dot.className = 'status-dot success';
+                        document.getElementById('sim-status-text').textContent = 'Live & Healthy';
+                        
+                        // Show Deployed success panel
+                        document.getElementById('deployed-modal').classList.add('active');
+                    }
+                }
+            }, 300); // Speed up log intervals for responsive feel
+        }
+    </script>
+</body>
+</html>
