@@ -1,15 +1,15 @@
-FROM python:3.10-slim
+FROM python:3.10-slim-bullseye
 
-# Prevent python from buffering stdout/stderr (critical for real-time Render logs)
+# Prevent python from buffering stdout/stderr
 ENV PYTHONUNBUFFERED=1
 ENV PYTHONDONTWRITEBYTECODE=1
 
-# Install system dependencies (ffmpeg for audio, pango/cairo for PDF generation)
+# Install system dependencies
 RUN apt-get update && apt-get install -y --no-install-recommends \
     ffmpeg \
     libpango-1.0-0 \
     libpangoft2-1.0-0 \
-    libharfbuzz-0b \
+    libharfbuzz-dev \
     libjpeg-dev \
     libopenjp2-7-dev \
     libffi-dev \
@@ -21,15 +21,16 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
 
 WORKDIR /app
 
-# Copy requirements and install python packages
+# Copy requirements first for Docker caching
 COPY requirements.txt .
+
 RUN pip install --no-cache-dir -r requirements.txt
 
-# Copy the rest of the application
+# Copy app files
 COPY . .
 
-# Expose port (Render sets this dynamically, but Gradio uses it)
+# Render port
 EXPOSE 7860
 
-# Run the app
+# Start app
 CMD ["python", "app.py"]
