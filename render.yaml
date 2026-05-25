@@ -3,12 +3,14 @@ services:
     name: voxpulse
     env: docker
     dockerfilePath: Dockerfile
-    plan: starter # Starter plan (2GB RAM) is recommended to prevent OOM
-    startCommand: python app.py
+    plan: starter
+
     envVars:
       - key: HF_TOKEN
-        sync: false # Prompts the user for their Hugging Face token in the UI
+        sync: false
+
       - key: PYTHONUNBUFFERED
         value: "true"
+
       - key: PORT
         value: "7860"
