@@ -1,7 +1,7 @@
 # 🎙️ VoxPulse: Call Quality Analysis Report
 ---
-**Report ID:** `9d8f4fe3-04bd-453b-a9c7-3eb7503e6439`  
-**Generated:** 2026-05-24 20:31:57 UTC  
+**Report ID:** `43e0bc9e-2633-4b9e-b7f8-ad5559794840`  
+**Generated:** 2026-05-25 15:17:37 UTC  
 **System:** VoxPulse v1.0  
 ---
 
@@ -16,21 +16,22 @@
 | **Risk Level** | High |
 
 ## 📝 Call Summary
-The customer calls out with a sarcastic remark about their appearance.
+The customer calls out with a derogatory nickname, indicating frustration.
 
 ## ⭐ Agent Performance
 ### Strengths
-- Sarcastic tone
+- Use of derogatory language
 - Direct confrontation
 
 ### Improvement Areas
-- Clarify expectations and avoid such confrontations
+- Provide more empathetic responses
+- Be more respectful
 
 ## ⚠️ Compliance Notes
 - No compliance issues detected. ✅
 
 ## 🎯 Recommended Next Steps
-1. Provide alternative options for payment methods
+1. Offer alternative greetings or apologies
 
 ## 💡 Final Recommendation
 > **Good Interaction.** Standard quality. Address minor improvement areas in the next 1-on-1.

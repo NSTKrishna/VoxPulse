@@ -1,26 +1,27 @@
 {
-    "call_summary": "The customer calls out with a sarcastic remark about their appearance.",
+    "call_summary": "The customer calls out with a derogatory nickname, indicating frustration.",
     "overall_sentiment": "Negative",
     "customer_sentiment": "Angry",
     "agent_score": 8,
     "strengths": [
-        "Sarcastic tone",
+        "Use of derogatory language",
         "Direct confrontation"
     ],
     "improvement_areas": [
-        "Clarify expectations and avoid such confrontations"
+        "Provide more empathetic responses",
+        "Be more respectful"
     ],
     "compliance_issues": [],
     "recommended_next_steps": [
-        "Provide alternative options for payment methods"
+        "Offer alternative greetings or apologies"
     ],
     "customer_risk_level": "High",
     "call_category": "General Inquiry",
     "resolution_status": "Unresolved",
     "confidence_score": 0.7,
     "_metadata": {
-        "report_id": "212fa67d-59fe-4112-94a4-15dc7f26b705",
-        "generated_at": "2026-05-24 20:31:57 UTC",
+        "report_id": "0bf19426-9b9d-4962-b45b-d9f5da8975cf",
+        "generated_at": "2026-05-25 15:17:37 UTC",
         "system_version": "VoxPulse v1.0"
     }
 }

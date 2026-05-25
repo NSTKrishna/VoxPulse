@@ -189,5 +189,14 @@ with gr.Blocks(title="VoxPulse - Call Analysis") as app:
     )
 
 if __name__ == "__main__":
-    # Launch the server (accessible at http://localhost:7860 and via a secure public link)
-    app.launch(server_name="0.0.0.0", server_port=7860, share=True)
+    # Get port from environment (Render dynamically assigns this, defaulting to 7860 for local)
+    port = int(os.environ.get("PORT", 7860))
+    # In cloud environments, avoid opening a public gradio tunnel since Render provides secure SSL routing
+    is_prod = "RENDER" in os.environ
+    
+    # Launch the server
+    app.launch(
+        server_name="0.0.0.0", 
+        server_port=port, 
+        share=not is_prod
+    )
