@@ -125,7 +125,7 @@ VoxPulse is optimized for live demonstrations.
    ```
 2. **Open the UI:** Navigate to `http://localhost:7860` in your web browser.
 3. **Upload Audio:** Drag and drop a sample customer support call into the "Upload Call Recording" box.
-4. **Run Analysis:** Click **Analyze Call**. 
+4. **Run Analysis:** Click **Analyze Call**. git add .
    - *Note for live demos:* A detailed progress bar will appear, allowing the audience to see the exact step the AI is executing (e.g., Transcribing -> Diarizing -> Aligning).
 5. **View Results:** The left panel will display the merged transcript, and the right panel will show the highlighted, structured JSON QA evaluation.
 6. **Download:** Grab the generated PDF report from the top right panel.
