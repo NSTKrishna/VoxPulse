@@ -58,6 +58,29 @@ try:
     Jinja2Templates.TemplateResponse = patched_template_response
 except Exception as e:
     print(f"Starlette TemplateResponse compatibility patch not applied: {e}")
+
+try:
+    import asyncio
+    import gradio.utils as gradio_utils
+    
+    class LazyLock:
+        def __init__(self):
+            self._lock = None
+            
+        def _get_lock(self):
+            if self._lock is None:
+                self._lock = asyncio.Lock()
+            return self._lock
+            
+        async def __aenter__(self):
+            return await self._get_lock().__aenter__()
+            
+        async def __aexit__(self, exc_type, exc_val, exc_tb):
+            return await self._get_lock().__aexit__(exc_type, exc_val, exc_tb)
+            
+    gradio_utils.safe_get_lock = lambda: LazyLock()
+except Exception as e:
+    print(f"safe_get_lock compatibility patch not applied: {e}")
 # -----------------------------------------------------------------------------
 
 import gradio as gr
