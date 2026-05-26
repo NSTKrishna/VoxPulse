@@ -8,6 +8,74 @@ import os
 import json
 import time
 import traceback
+
+# -----------------------------------------------------------------------------
+# Gradio, Pydantic, & Jinja2 Python 3.14 Compatibility Monkeypatches
+# Prevents:
+# - TypeError: argument of type 'bool' is not a container or iterable in get_type
+# - AttributeError: 'bool' object has no attribute 'get' in _json_schema_to_python_type
+# - TypeError: cannot use 'tuple' as a dict key (unhashable type: 'dict') in jinja2
+# -----------------------------------------------------------------------------
+try:
+    import gradio_client.utils as gradio_client_utils
+    original_get_type = gradio_client_utils.get_type
+    original_json_schema = gradio_client_utils._json_schema_to_python_type
+    
+    def patched_get_type(schema):
+        if isinstance(schema, bool):
+            return {}
+        return original_get_type(schema)
+        
+    def patched_json_schema(schema, defs):
+        if isinstance(schema, bool):
+            schema = {}
+        return original_json_schema(schema, defs)
+        
+    gradio_client_utils.get_type = patched_get_type
+    gradio_client_utils._json_schema_to_python_type = patched_json_schema
+except Exception as e:
+    print(f"Gradio Client compatibility patch not applied: {e}")
+
+try:
+    import jinja2.utils
+    original_getitem = jinja2.utils.LRUCache.__getitem__
+    original_setitem = jinja2.utils.LRUCache.__setitem__
+    
+    def make_hashable(key):
+        if isinstance(key, tuple):
+            return tuple(make_hashable(x) for x in key)
+        elif isinstance(key, dict):
+            return tuple((k, make_hashable(v)) for k, v in sorted(key.items()))
+        elif isinstance(key, list):
+            return tuple(make_hashable(x) for x in key)
+        elif isinstance(key, set):
+            return tuple(make_hashable(x) for x in sorted(key))
+        return key
+        
+    def patched_getitem(self, key):
+        try:
+            return original_getitem(self, key)
+        except TypeError:
+            try:
+                return original_getitem(self, make_hashable(key))
+            except TypeError:
+                raise KeyError(key)
+                
+    def patched_setitem(self, key, value):
+        try:
+            original_setitem(self, key, value)
+        except TypeError:
+            try:
+                original_setitem(self, make_hashable(key), value)
+            except TypeError:
+                pass
+                
+    jinja2.utils.LRUCache.__getitem__ = patched_getitem
+    jinja2.utils.LRUCache.__setitem__ = patched_setitem
+except Exception as e:
+    print(f"Jinja2 compatibility patch not applied: {e}")
+# -----------------------------------------------------------------------------
+
 import gradio as gr
 from dotenv import load_dotenv
 
