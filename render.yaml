@@ -3,7 +3,8 @@ services:
     name: voxpulse
     env: docker
     dockerfilePath: Dockerfile
-    plan: starter
+    plan: free
+
 
     envVars:
       - key: HF_TOKEN

@@ -1,7 +1,7 @@
 """
 app.py
 
-Modern, Demo-Ready Gradio Interface for VoxPulse
+Modern, Demo-Ready Gradio Interface for VoxPulse (Optimized for Render Free Tier)
 """
 
 import os
@@ -17,30 +17,20 @@ load_dotenv()
 # Import pipeline modules
 from modules.utils import convert_audio_to_wav
 from modules.transcribe import AudioTranscriber
-from modules.diarization import AudioDiarizer
-from modules.alignment import TranscriptAligner
-from modules.analyze import CallAnalyzer
-from modules.report_generator import ReportGenerator
 
 # Global instances (lazy loaded to save memory and startup time)
 pipeline_instances = {}
 
 def load_pipeline():
     """Lazy loads all heavy AI models to prevent crashing on app startup."""
-    expected_keys = ['transcriber', 'diarizer', 'analyzer', 'report_gen']
+    expected_keys = ['transcriber']
     if not all(k in pipeline_instances for k in expected_keys):
         print("Initializing AI models... (this may take a minute)")
         try:
-            # For local demos, "base" or "small" are recommended for whisper
             if 'transcriber' not in pipeline_instances:
-                pipeline_instances['transcriber'] = AudioTranscriber(model_name="base")
-            if 'diarizer' not in pipeline_instances:
-                pipeline_instances['diarizer'] = AudioDiarizer()
-            if 'analyzer' not in pipeline_instances:
-                pipeline_instances['analyzer'] = CallAnalyzer()
-            if 'report_gen' not in pipeline_instances:
-                pipeline_instances['report_gen'] = ReportGenerator(output_dir="outputs")
-            print("All models loaded successfully!")
+                # Use "tiny" model as recommended for the 512MB RAM free tier
+                pipeline_instances['transcriber'] = AudioTranscriber(model_name="tiny")
+            print("Transcription model loaded successfully!")
         except Exception as e:
             pipeline_instances.clear()
             raise e
@@ -61,60 +51,56 @@ def process_audio(audio_path, progress=gr.Progress()):
         
     try:
         # 0. Load Models
-        progress(0.05, desc="Loading AI Models (Whisper, Pyannote, Phi-3)...")
+        progress(0.1, desc="Loading optimized Whisper model...")
         models = load_pipeline()
         
         # 1. Audio Prep
-        progress(0.1, desc="Preprocessing and normalizing audio...")
+        progress(0.3, desc="Preprocessing and normalizing audio...")
         wav_path = convert_audio_to_wav(audio_path)
-        base_name = os.path.splitext(os.path.basename(audio_path))[0]
         
         # 2. Transcription
-        progress(0.2, desc="Transcribing audio with Whisper...")
+        progress(0.5, desc="Transcribing audio with optimized CPU engine...")
         whisper_segments = models['transcriber'].transcribe_audio(wav_path)
         if not whisper_segments:
             raise gr.Error("Transcription failed. Please check the logs.")
             
-        # 3. Diarization
-        progress(0.5, desc="Detecting speakers with Pyannote...")
-        diarization_segments = models['diarizer'].diarize_audio(wav_path)
-        if not diarization_segments:
-            raise gr.Error("Diarization failed. Please check the logs.")
+        # Format conversation with beautiful timestamps
+        progress(0.8, desc="Formatting transcript...")
+        conversation_text = ""
+        for seg in whisper_segments:
+            start = seg['start']
+            end = seg['end']
+            text = seg['text']
+            minutes_start = int(start // 60)
+            seconds_start = int(start % 60)
+            minutes_end = int(end // 60)
+            seconds_end = int(end % 60)
+            timestamp = f"[{minutes_start:02d}:{seconds_start:02d} - {minutes_end:02d}:{seconds_end:02d}]"
+            conversation_text += f"{timestamp} {text}\n"
             
-        # 4. Alignment
-        progress(0.7, desc="Aligning speaker timelines with transcript...")
-        aligned_data = TranscriptAligner.align_segments(whisper_segments, diarization_segments)
-        conversation_text = TranscriptAligner.format_conversation(aligned_data)
-        
-        # 5. Analysis
-        progress(0.8, desc="Analyzing interaction with Phi-3 Mini...")
-        analysis_result = models['analyzer'].analyze_transcript(conversation_text)
-        if not analysis_result:
-            raise gr.Error("Analysis failed to return valid JSON.")
-            
-        # 6. Report Generation
-        progress(0.9, desc="Exporting PDF and JSON reports...")
-        paths = models['report_gen'].generate_all(base_name, analysis_result)
-        
         # Cleanup temp wav file if one was created
         if wav_path != audio_path and os.path.exists(wav_path):
             os.remove(wav_path)
             
         progress(1.0, desc="Complete!")
         
-        # Format outputs for the Gradio UI
+        # In a 512MB RAM environment, local SLM is bypassed to prevent memory exhaustion
+        analysis_result = {
+            "status": "Inference Optimized",
+            "message": "Local AI Quality Assurance analysis and PDF generation are bypassed on the Render Free Tier (512MB RAM limit) to prevent system crashes.",
+            "tip": "To enable complete speaker diarization, AI-driven evaluation scores, and dynamic PDF reports, deploy to Hugging Face Spaces (16GB RAM Free Tier) or use a paid/GPU-enabled tier."
+        }
+        
         formatted_analysis = json.dumps(analysis_result, indent=4)
-        downloadable_files = [paths.get('json'), paths.get('pdf')]
         
         return (
             conversation_text,         # Sent to the TextArea
             formatted_analysis,        # Sent to the Code block
-            downloadable_files         # Sent to the File downloader
+            []                         # Sent to the File downloader (empty)
         )
         
     except Exception as e:
         traceback.print_exc()
-        # Gradio gr.Error creates a nice red popup in the UI instead of crashing the app
         raise gr.Error(f"An unexpected error occurred: {str(e)}")
 
 # =============================================================================
@@ -138,7 +124,7 @@ with gr.Blocks(title="VoxPulse - Call Analysis") as app:
     # 1. Header Section
     with gr.Column(elem_classes="header-text"):
         gr.Markdown("# 🎙️ VoxPulse: AI Voice Call Analysis")
-        gr.Markdown("Upload a customer support call to automatically transcribe, detect speakers, and generate an AI-driven quality assurance report.")
+        gr.Markdown("Upload a customer support call to automatically transcribe audio under optimized resource limits.")
         
     # 2. Top Row (Inputs & File Outputs)
     with gr.Row():
@@ -157,14 +143,14 @@ with gr.Blocks(title="VoxPulse - Call Analysis") as app:
         with gr.Column(scale=1, variant="panel"):
             gr.Markdown("### 2. Download Reports")
             report_files = gr.File(label="Generated Documents (PDF & JSON)", file_count="multiple", interactive=False)
-            gr.Markdown("*Reports are automatically generated and stamped with metadata.*")
+            gr.Markdown("*Reports are disabled on the Render Free Tier to maintain stability.*")
             
     # 3. Bottom Row (Text Visualizations)
     with gr.Row():
         
         # Transcript Viewer
         with gr.Column():
-            gr.Markdown("### Diarized Transcript")
+            gr.Markdown("### Timestamped Transcript")
             transcript_output = gr.TextArea(
                 label="Conversation",
                 lines=18,
