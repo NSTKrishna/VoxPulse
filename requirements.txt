@@ -5,7 +5,6 @@ accelerate
 openai-whisper
 pyannote.audio
 gradio==4.26.0
-pydub==0.25.1
 python-dotenv
 jinja2
 markdown
