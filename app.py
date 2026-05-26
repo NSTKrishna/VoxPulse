@@ -10,11 +10,11 @@ import time
 import traceback
 
 # -----------------------------------------------------------------------------
-# Gradio, Pydantic, & Jinja2 Python 3.14 Compatibility Monkeypatches
+# Gradio, Pydantic, & Starlette Python 3.14 Compatibility Monkeypatches
 # Prevents:
 # - TypeError: argument of type 'bool' is not a container or iterable in get_type
 # - AttributeError: 'bool' object has no attribute 'get' in _json_schema_to_python_type
-# - TypeError: cannot use 'tuple' as a dict key (unhashable type: 'dict') in jinja2
+# - Starlette >= 0.28 TemplateResponse signature compatibility gap with older Gradio
 # -----------------------------------------------------------------------------
 try:
     import gradio_client.utils as gradio_client_utils
@@ -37,43 +37,27 @@ except Exception as e:
     print(f"Gradio Client compatibility patch not applied: {e}")
 
 try:
-    import jinja2.utils
-    original_getitem = jinja2.utils.LRUCache.__getitem__
-    original_setitem = jinja2.utils.LRUCache.__setitem__
+    from starlette.templating import Jinja2Templates
+    original_template_response = Jinja2Templates.TemplateResponse
     
-    def make_hashable(key):
-        if isinstance(key, tuple):
-            return tuple(make_hashable(x) for x in key)
-        elif isinstance(key, dict):
-            return tuple((k, make_hashable(v)) for k, v in sorted(key.items()))
-        elif isinstance(key, list):
-            return tuple(make_hashable(x) for x in key)
-        elif isinstance(key, set):
-            return tuple(make_hashable(x) for x in sorted(key))
-        return key
+    def patched_template_response(self, *args, **kwargs):
+        # Starlette >= 0.28 signature: (self, request, name, context=None, ...)
+        # Gradio <= 4.44 signature: (self, name, context=None, ...)
+        # If the first argument is a string, it is the template name (old signature).
+        if len(args) > 0 and isinstance(args[0], str):
+            name = args[0]
+            context = args[1] if len(args) > 1 else kwargs.get("context", {})
+            request = context.get("request") if isinstance(context, dict) else None
+            
+            # Reconstruct arguments for the new Starlette signature
+            new_args = (request, name, context) + args[2:]
+            return original_template_response(self, *new_args, **kwargs)
+            
+        return original_template_response(self, *args, **kwargs)
         
-    def patched_getitem(self, key):
-        try:
-            return original_getitem(self, key)
-        except TypeError:
-            try:
-                return original_getitem(self, make_hashable(key))
-            except TypeError:
-                raise KeyError(key)
-                
-    def patched_setitem(self, key, value):
-        try:
-            original_setitem(self, key, value)
-        except TypeError:
-            try:
-                original_setitem(self, make_hashable(key), value)
-            except TypeError:
-                pass
-                
-    jinja2.utils.LRUCache.__getitem__ = patched_getitem
-    jinja2.utils.LRUCache.__setitem__ = patched_setitem
+    Jinja2Templates.TemplateResponse = patched_template_response
 except Exception as e:
-    print(f"Jinja2 compatibility patch not applied: {e}")
+    print(f"Starlette TemplateResponse compatibility patch not applied: {e}")
 # -----------------------------------------------------------------------------
 
 import gradio as gr
