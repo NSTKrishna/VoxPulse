@@ -58,10 +58,14 @@ try:
     Jinja2Templates.TemplateResponse = patched_template_response
 except Exception as e:
     print(f"Starlette TemplateResponse compatibility patch not applied: {e}")
+# -----------------------------------------------------------------------------
+
+import gradio as gr
 
 try:
     import asyncio
     import gradio.utils as gradio_utils
+    import gradio.queueing as gradio_queueing
     
     class LazyLock:
         def __init__(self):
@@ -79,11 +83,10 @@ try:
             return await self._get_lock().__aexit__(exc_type, exc_val, exc_tb)
             
     gradio_utils.safe_get_lock = lambda: LazyLock()
+    gradio_queueing.safe_get_lock = lambda: LazyLock()
 except Exception as e:
     print(f"safe_get_lock compatibility patch not applied: {e}")
-# -----------------------------------------------------------------------------
 
-import gradio as gr
 from dotenv import load_dotenv
 
 # Load environment variables
